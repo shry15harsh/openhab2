@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="nest"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+    xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+    <thing-type id="temperature">
+        <label>Nest Thermostat Temperature</label>
+        <description>Provides temperature value in Fahrenheit from Nest Thermostat</description>
+
+    <config-description>
+            <parameter name="pin_code" type="text" required="true">
+                <label>PIN CODE</label>
+                <description>Please get it from the link https://home.nest.com/login/oauth2?client_id=09cadf8f-5d83-4e46-ba3d-7aec0359cecc</description>
+            </parameter>
+    </config-description>
+    </thing-type>
+    
+
+</thing:thing-descriptions>
