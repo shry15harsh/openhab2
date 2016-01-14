@@ -1,0 +1,1 @@
+mvn clean install && cp target/org.openhab.binding.discoverasfalio-2.0.0-SNAPSHOT.jar /media/hduser/50145152-b773-4f26-9e9e-883fea2ccea0/IOT/openhab/fork/distribution/target/distribution-2.0.0-SNAPSHOT-runtime/addons/org.openhab.binding.discoverasfalio-2.0.0-SNAPSHOT.jar

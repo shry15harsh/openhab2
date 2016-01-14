@@ -37,6 +37,8 @@
     <module>org.openhab.binding.tesla</module>
     <module>org.openhab.binding.vitotronic</module>
     <module>org.openhab.binding.nest</module>
+    <module>org.openhab.binding.discoverasfalio</module>
+    <module>org.openhab.binding.dnsdiscoverasfalio</module>
   </modules>
 
 </project>

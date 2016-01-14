@@ -1,0 +1,34 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: discoverAsfalio Binding
+Bundle-SymbolicName: org.openhab.binding.discoverasfalio;singleton:=true
+Bundle-Vendor: openHAB
+Bundle-Version: 2.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ClassPath: .
+Import-Package: 
+ javax.jmdns;version="3.4.2",
+ org.eclipse.smarthome.config.core,
+ org.eclipse.smarthome.config.discovery,
+ org.eclipse.smarthome.core.library.types,
+ org.eclipse.smarthome.core.thing,
+ org.eclipse.smarthome.core.thing.binding,
+ org.eclipse.smarthome.core.thing.binding.builder,
+ org.eclipse.smarthome.core.thing.type,
+ org.eclipse.smarthome.core.types,
+ org.eclipse.smarthome.io.transport.mdns.discovery,
+ org.jupnp,
+ org.jupnp.controlpoint,
+ org.jupnp.model.action,
+ org.jupnp.model.message,
+ org.jupnp.model.message.header,
+ org.jupnp.model.meta,
+ org.jupnp.model.types,
+ org.jupnp.registry,
+ org.openhab.binding.discoverasfalio,
+ org.openhab.binding.discoverasfalio.handler,
+ org.osgi.framework;version="1.8.0",
+ org.slf4j
+Service-Component: OSGI-INF/*.xml
+Export-Package: org.openhab.binding.discoverasfalio,
+ org.openhab.binding.discoverasfalio.handler
