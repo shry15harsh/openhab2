@@ -53,9 +53,16 @@ public class nestHandler extends BaseThingHandler {
 
     private Logger logger = LoggerFactory.getLogger(nestHandler.class);
 
-    private static Channel[] channels;
+    private Channel[] channels;
+    private channel_with_type[] thermo_channels;
+    private channel_with_type[] smoke_channels;
+    private channel_with_type[] camera_channels;
 
-    private static boolean channels_created = false;
+    private int num_thermostat;
+    private int num_smoke;
+    private int num_camera;
+
+    private boolean channels_created = false;
 
     public nestHandler(Thing thing) {
         super(thing);
@@ -128,7 +135,6 @@ public class nestHandler extends BaseThingHandler {
         /*
          * Set Channels
          */
-        channel_with_type[] thermo_channels;
         thermo_channels = new channel_with_type[NUM_THERMO_CHANNELS];
         for (int i = 0; i < thermo_channels.length; ++i) {
             thermo_channels[i] = new channel_with_type();
@@ -157,7 +163,6 @@ public class nestHandler extends BaseThingHandler {
         thermo_channels[21].setChannel("humidity", "Number");
         thermo_channels[22].setChannel("hvac_state", "Number");
 
-        channel_with_type[] smoke_channels;
         smoke_channels = new channel_with_type[NUM_SMOKE_CHANNELS];
         for (int i = 0; i < smoke_channels.length; ++i) {
             smoke_channels[i] = new channel_with_type();
@@ -170,7 +175,6 @@ public class nestHandler extends BaseThingHandler {
         smoke_channels[4].setChannel("last_manual_test_time", "String");
         smoke_channels[5].setChannel("ui_color_state", "String");
 
-        channel_with_type[] camera_channels;
         camera_channels = new channel_with_type[NUM_CAMERA_CHANNELS];
         for (int i = 0; i < camera_channels.length; ++i) {
             camera_channels[i] = new channel_with_type();
@@ -195,9 +199,9 @@ public class nestHandler extends BaseThingHandler {
         /*
          * Number of different devices to create channels for each of them
          */
-        int num_thermostat = response.getDevices().getThermostats().size();
-        int num_smoke = response.getDevices().getSmoke_co_alarms().size();
-        int num_camera = response.getDevices().getCameras().size();
+        num_thermostat = response.getDevices().getThermostats().size();
+        num_smoke = response.getDevices().getSmoke_co_alarms().size();
+        num_camera = response.getDevices().getCameras().size();
 
         channels = new Channel[NUM_THERMO_CHANNELS * num_thermostat + NUM_SMOKE_CHANNELS * num_smoke
                 + NUM_CAMERA_CHANNELS * num_camera];
@@ -262,6 +266,10 @@ public class nestHandler extends BaseThingHandler {
         // thingBuilder.withChannels(channels);
         channels_created = true;
         for (i = 0; i < channels.length; ++i) {
+            System.out.println(">>> channel is " + i + " " + channels[i].getUID().toString());
+        }
+
+        for (i = 0; i < channels.length; ++i) {
             try {
                 addLink(channels[i].getUID().getId(), channels[i].getUID().toString());
             } catch (Exception e) {
@@ -277,155 +285,171 @@ public class nestHandler extends BaseThingHandler {
         logger.info(">>> update channels");
         String channel_prefix;
         Integer j = 0;
+        Integer num = 0;
+        // TODO Check if num_thermostat < number of devices (using value of j), if true, create channels again
+        // (channels_created=false)
         for (Map.Entry<String, Thermostat> thermostat : response.getDevices().getThermostats().entrySet()) {
+            System.out.println(">>>> thermo no #" + j);
+            Integer mul = j * NUM_THERMO_CHANNELS;
             ++j;
             channel_prefix = "thermo" + j.toString() + "_";
 
-            State value = new StringType(thermostat.getValue().getCan_cool().toString());
-            updateState(channels[0].getUID(), value);
+            State value;
+
+            /*
+             * Order must be same as channels array, another way is to use multiplier with channel number
+             */
+            value = new StringType(thermostat.getValue().getCan_cool().toString());
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getCan_heat().toString());
-            updateState(channels[1].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getIs_using_emergency_heat().toString());
-            updateState(channels[2].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getHas_fan().toString());
-            updateState(channels[3].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
-            value = new StringType(thermostat.getValue().getFan_timer_active().toString());
-            updateState(channels[4].getUID(), value);
+            // value = new StringType(thermostat.getValue().getFan_timer_active().toString());
+            // updateState(channels[num++].getUID(), value);
 
-            value = new StringType(thermostat.getValue().getFan_timer_timeout().toString());
-            updateState(channels[5].getUID(), value);
+            // value = new StringType(thermostat.getValue().getFan_timer_timeout().toString());
+            // updateState(channels[num++].getUID(), value);
+            num += 2;
 
             value = new StringType(thermostat.getValue().getHas_leaf().toString());
-            updateState(channels[6].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getTemperature_scale().toString());
-            updateState(channels[7].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getTarget_temperature_f().toString());
-            updateState(channels[8].getUID(), value);
+            System.out.println(">>>> thermo #" + j + " and channel = " + channels[8 + mul].getUID().toString());
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getTarget_temperature_c().toString());
-            updateState(channels[9].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getTarget_temperature_high_f().toString());
-            updateState(channels[10].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getTarget_temperature_high_c().toString());
-            updateState(channels[11].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getTarget_temperature_low_f().toString());
-            updateState(channels[12].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getTarget_temperature_low_c().toString());
-            updateState(channels[13].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getAway_temperature_high_f().toString());
-            updateState(channels[14].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getAway_temperature_high_c().toString());
-            updateState(channels[15].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getAway_temperature_low_f().toString());
-            updateState(channels[16].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getAway_temperature_low_c().toString());
-            updateState(channels[17].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getHvac_mode().toString());
-            updateState(channels[18].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getAmbient_temperature_f().toString());
-            updateState(channels[19].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getAmbient_temperature_c().toString());
-            updateState(channels[20].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getHumidity().toString());
-            updateState(channels[21].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getHvac_state().toString());
-            updateState(channels[22].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
         }
 
         j = 0;
         for (Map.Entry<String, SmokeCOAlarm> smoke : response.getDevices().getSmoke_co_alarms().entrySet()) {
+            System.out.println(">>>>>>>>>Smoke #" + j);
+            Integer mul = j * NUM_SMOKE_CHANNELS;
             ++j;
             channel_prefix = "smoke" + j.toString() + "_";
 
             State value = new StringType(smoke.getValue().getBattery_health().toString());
-            updateState(channels[23].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(smoke.getValue().getCo_alarm_state().toString());
-            updateState(channels[24].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(smoke.getValue().getSmoke_alarm_state().toString());
-            updateState(channels[25].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(smoke.getValue().getIs_manual_test_active().toString());
-            updateState(channels[26].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(smoke.getValue().getLast_manual_test_time().toString());
-            updateState(channels[27].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(smoke.getValue().getUi_color_state().toString());
-            updateState(channels[28].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
         }
 
         j = 0;
         for (Map.Entry<String, Camera> camera : response.getDevices().getCameras().entrySet()) {
+            System.out.println(">>>>>>>>>camera");
+            Integer mul = j * NUM_CAMERA_CHANNELS;
             ++j;
             channel_prefix = "camera" + j.toString() + "_";
 
             State value = new StringType(camera.getValue().getIs_streaming().toString());
-            updateState(channels[29].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getIs_audio_input_enabled().toString());
-            updateState(channels[30].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_is_online_change().toString());
-            updateState(channels[31].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getIs_video_history_enabled().toString());
-            updateState(channels[32].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getWeb_url().toString());
-            updateState(channels[33].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getApp_url().toString());
-            updateState(channels[34].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_event().getHas_sound().toString());
-            updateState(channels[35].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_event().getHas_motion().toString());
-            updateState(channels[36].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_event().getStart_time().toString());
-            updateState(channels[37].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_event().getEnd_time().toString());
-            updateState(channels[38].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_event().getUrls_expire_time().toString());
-            updateState(channels[39].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_event().getWeb_url().toString());
-            updateState(channels[40].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_event().getApp_url().toString());
-            updateState(channels[41].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_event().getImage_url().toString());
-            updateState(channels[42].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_event().getAnimated_image_url().toString());
-            updateState(channels[43].getUID(), value);
+            updateState(channels[num++].getUID(), value);
 
         }
 
@@ -497,6 +521,7 @@ public class nestHandler extends BaseThingHandler {
     }
 
     private static void addLink(String itemName, String channelName) throws IOException {
+        System.out.println(">>>> item=" + itemName + " channelName=" + channelName);
         URL obj = new URL("http://localhost:8080/rest/links/" + itemName + "/" + channelName);
         HttpURLConnection con = (HttpURLConnection) obj.openConnection();
         con.setRequestMethod("PUT");
@@ -562,9 +587,11 @@ public class nestHandler extends BaseThingHandler {
 
     @Override
     public void dispose() {
+        System.out.println(">>> dispose called before removing the thing");
         refreshJob.cancel(true);
         logger.debug("Setting status for thing '{}' to OFFLINE", getThing().getUID());
         updateStatus(ThingStatus.OFFLINE);
+        super.dispose();
     }
 
 }

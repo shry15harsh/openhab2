@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="nest"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+        xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+    <!-- Sample Thing Type -->
+    <thing-type id="temperature">
+        <label>nest Binding Thing</label>
+        <description>Sample thing for nest Binding</description>
+
+        <channels>
+            <channel id="channel1" typeId="sample-channel"/>
+        </channels>
+        
+        <config-description>
+            <parameter name="pin_code" type="text" required="true">
+                <label>PIN CODE</label>
+                <description>Please get it from the link https://home.nest.com/login/oauth2?client_id=09cadf8f-5d83-4e46-ba3d-7aec0359cecc</description>
+                <default></default>
+                <!-- https://home.nest.com/login/oauth2?client_id=09cadf8f-5d83-4e46-ba3d-7aec0359cecc&state=STATE-->
+            </parameter>
+        </config-description>
+    </thing-type>
+
+    <!-- Sample Channel Type -->
+    <channel-type id="sample-channel">
+        <item-type>nestItem</item-type>
+        <label>nest Binding Channel</label>
+        <description>Sample channel for nest Binding</description>
+    </channel-type>
+
+</thing:thing-descriptions>

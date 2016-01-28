@@ -60,6 +60,7 @@ public class NestAuth implements ManagedService {
                     System.out.println(">>>pin code b nahi hai bhai, isko bol ki update kre config me");
                 } else {
                     System.out.println(">>> chalo, pin code to hai: " + cfg.getProperties().get("pin_code"));
+                    prefs.put("pin_code", cfg.getProperties().get("pin_code").toString());
                     credentials.pinCode = cfg.getProperties().get("pin_code").toString();
                     if (credentials.retrieveAccessToken()) {
                         System.out.println(">>> access token retrieved is " + credentials.accessToken);
@@ -69,9 +70,29 @@ public class NestAuth implements ManagedService {
                     }
                 }
             } else {
-                // TODO if pin code is changed, request access token again
-                // System.out.println(">>>ispe to hai bhai");
-                credentials.accessToken = saved_access_token;
+                // TODO exceptional cases when pin is null but access token is not
+                System.out.println(">>>access token hai bhai, purana to nahi h?");
+                if (prefs.get("pin_code", null) == null) {
+                    System.out.println(">>> pin_code is null in prefs");
+                } else {
+                    System.out.println(">>> pin_code " + prefs.get("pin_code", null).toString() + ", "
+                            + cfg.getProperties().get("pin_code").toString());
+                }
+                if (prefs.get("pin_code", null).toString().equals(cfg.getProperties().get("pin_code").toString())) {
+                    System.out.println(">>> nahi, naya hi hai " + saved_access_token);
+                    credentials.accessToken = saved_access_token;
+                } else {
+                    System.out.println(">>> Pin code changed, requesting new access token");
+                    prefs.put("pin_code", cfg.getProperties().get("pin_code").toString());
+                    credentials.pinCode = cfg.getProperties().get("pin_code").toString();
+                    if (credentials.retrieveAccessToken()) {
+                        System.out.println(">>> new access token retrieved is " + credentials.accessToken);
+                        prefs.put("access_token", credentials.accessToken);
+                    } else {
+                        System.out.println(">>>naa le paaya naya access token");
+                    }
+                }
+
                 // System.out.println(">>>: " + credentials.accessToken);
             }
 

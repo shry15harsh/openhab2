@@ -1,0 +1,122 @@
+<html>
+<head>
+</head>
+<body>
+  <script src="jquery1-11-0.min.js"></script>
+  <script>
+var monitorStatus;
+  $(document).ready(function(){
+
+monitorStatus="OFF";
+var thermo_channels = ["can_cool",
+"can_heat",
+"is_using_emergency_heat",
+"has_fan",
+"has_leaf",
+"temperature_scale",
+"target_temperature_f",
+"target_temperature_c",
+"away_temperature_high_f",
+"away_temperature_high_c",
+"away_temperature_low_f",
+"away_temperature_low_c",
+"hvac_mode",
+"ambient_temperature_f",
+"ambient_temperature_c",
+"humidity",
+"hvac_state"];
+
+var smoke_channels = ["battery_health",
+"co_alarm_state",
+"smoke_alarm_state",
+"is_manual_test_active",
+"last_manual_test_time",
+"ui_color_state"];
+
+var camera_channels = ["is_streaming",
+"is_audio_input_enabled",
+"last_is_online_change",
+"is_video_history_enabled",
+"web_url",
+"app_url",
+"last_eventhas_sound",
+"last_eventhas_motion",
+"last_eventstart_time",
+"last_eventend_time",
+"last_eventurls_expire_time",
+"last_eventweb_url",
+"last_eventapp_url",
+"last_eventimage_url",
+"last_eventanimated_image_url"];
+
+for(var i=0;i<thermo_channels.length;++i){
+	getData("thermo1_"+thermo_channels[i]);
+}
+for(var i=0;i<thermo_channels.length;++i){
+	getData("thermo2_"+thermo_channels[i]);
+}
+for(var i=0;i<thermo_channels.length;++i){
+	getData("thermo3_"+thermo_channels[i]);
+}
+for(var i=0;i<smoke_channels.length;++i){
+	getData("smoke1_"+smoke_channels[i]);
+}
+for(var i=0;i<camera_channels.length;++i){
+	getData("camera1_"+camera_channels[i]);
+}
+  });
+function getData(channel){
+	$.get("http://localhost:8080/rest/items/"+channel, function(result){
+		$('body').append("<b>"+channel+"</b>"+": "+"<span style='color:green'>"+result.state+"</span>"+"<br>");
+	});
+
+}
+function toggleMonitoring(){
+$.ajax({
+    type: 'PUT', 
+    url: "http://localhost:8080/rest/items/", 
+    contentType: "application/json",
+    data: {itemname:"monitorState",body:'{"type": "SwitchItem","name": "monitorState","label": "","category": "","tags": [],"groupNames": []}'},
+	success: function (data, textStatus, xhr) {
+		$.ajax({
+		    type: 'PUT', 
+		    url: "http://localhost:8080/rest/links/", 
+			data: { itemName: "monitorState", channelUID: "discoverasfalio:asfalio:10911142:monitorState"} ,
+			success: function (data, textStatus, xhr) {
+				var command;
+				if(monitorStatus=='OFF'){
+					command='ON';
+				}else{
+					command='OFF';		
+				}
+				$.post("http://localhost:8080/rest/items/monitorState",command,function(){
+						monitorStatus=command;
+						console.log('monitorStatus='+monitorStatus);
+				});	
+			}
+		}); 
+        }
+}); 
+}
+
+	function authorizeNest(){
+		window.open('/nestauth', '_blank');
+	}
+	function handleCode(pincode){
+		console.log(pincode);
+		$.ajax({
+			url: "http://localhost:8080/rest/setup/things?enableChannels=false",
+			type: 'POST',
+			contentType:"application/json; charset=utf-8",
+			dataType : "json",
+			crossDomain: true,
+			data: {"UID":"nest:temperature:adce570d","configuration":{"pin_code":"sdsa"},"item":{"label":"nest Binding Thing","groupNames":[]}},
+			success: function(){
+				alert("Successfully created thing");
+			}
+		    });		
+	}
+  </script>
+<button onclick="authorizeNest()">OAuth Nest</button><span id="monitorStatus"></span><br>
+</body>
+</html>

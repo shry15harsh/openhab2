@@ -7,11 +7,12 @@
  */
 package org.openhab.binding.discoverasfalio.internal;
 
+import static org.openhab.binding.discoverasfalio.discoverAsfalioBindingConstants.THING_TYPE_ASFALIO;
+
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandlerFactory;
 import org.eclipse.smarthome.core.thing.binding.ThingHandler;
-import org.openhab.binding.discoverasfalio.discoverAsfalioBindingConstants;
 import org.openhab.binding.discoverasfalio.handler.discoverAsfalioHandler;
 
 /**
@@ -22,15 +23,12 @@ import org.openhab.binding.discoverasfalio.handler.discoverAsfalioHandler;
  */
 public class discoverAsfalioHandlerFactory extends BaseThingHandlerFactory {
 
-    // public static final String BINDING_ID = "discoverasfalio";
-    // public final static ThingTypeUID THING_TYPE_ASFALIO = new ThingTypeUID(BINDING_ID, "asfalio");
-
     @Override
     protected ThingHandler createHandler(Thing thing) {
 
         ThingTypeUID thingTypeUID = thing.getThingTypeUID();
 
-        if (thingTypeUID.equals(discoverAsfalioBindingConstants.THING_TYPE_ASFALIO)) {// THING_TYPE_SAMPLE)) {
+        if (thingTypeUID.equals(THING_TYPE_ASFALIO)) {// THING_TYPE_SAMPLE)) {
             return new discoverAsfalioHandler(thing);
         }
 
@@ -39,8 +37,7 @@ public class discoverAsfalioHandlerFactory extends BaseThingHandlerFactory {
 
     @Override
     public boolean supportsThingType(ThingTypeUID thingTypeUID) {
-        // TODO Auto-generated method stub
-        if (thingTypeUID.equals(discoverAsfalioBindingConstants.THING_TYPE_ASFALIO)) {
+        if (thingTypeUID.equals(THING_TYPE_ASFALIO)) {
             return true;
         }
         return false;

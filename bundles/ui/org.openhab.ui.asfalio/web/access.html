@@ -1,0 +1,29 @@
+<html>
+<head>
+</head>
+<body>
+	<script src="jquery1-11-0.min.js"></script>
+	<script>
+		  $(document).ready(function(){
+			$('body').html("Congrats, you have been authorised. Redirecting back to save the Athorization Code.");
+			var pincode = getUrlParameter('code');
+			window.opener.handleCode(pincode);
+			window.close();
+		});
+		function getUrlParameter(sParam) {
+		    var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+			sURLVariables = sPageURL.split('&'),
+			sParameterName,
+			i;
+
+		    for (i = 0; i < sURLVariables.length; i++) {
+			sParameterName = sURLVariables[i].split('=');
+
+			if (sParameterName[0] === sParam) {
+			    return sParameterName[1] === undefined ? true : sParameterName[1];
+			}
+		    }
+		}
+	</script>
+</body>
+</html>

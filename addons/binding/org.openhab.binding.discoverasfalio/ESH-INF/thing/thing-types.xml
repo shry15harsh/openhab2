@@ -11,14 +11,15 @@
 
         <channels>
             <channel id="monitorState" typeId="asfalio-channel"/>
+            <channel id="recordingState" typeId="asfalio-channel"/>
         </channels>
     </thing-type>
 
     <!-- Sample Channel Type -->
     <channel-type id="asfalio-channel">
-        <item-type>discoverasfalioItem</item-type>
+        <item-type>Switch</item-type>
         <label>discoverAsfalio Binding Channel</label>
-        <description>Sample channel for discoverAsfalio Binding</description>
+        <description>Switch Type Channel for discoverAsfalio Binding</description>
     </channel-type>
 
 </thing:thing-descriptions>

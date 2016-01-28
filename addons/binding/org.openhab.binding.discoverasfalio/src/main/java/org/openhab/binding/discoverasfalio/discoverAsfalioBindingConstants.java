@@ -25,6 +25,10 @@ public class discoverAsfalioBindingConstants {
 
     // List of all Channel ids
     public final static String CHANNEL_1 = "monitorState";
+    public final static String CHANNEL_2 = "recordingState";
+
+    public static String monitorState = "OFF";
+    public static String recordingState = "ON";
 
     public final static ThingTypeUID THING_TYPE_ASFALIO = new ThingTypeUID(BINDING_ID, "asfalio");
 

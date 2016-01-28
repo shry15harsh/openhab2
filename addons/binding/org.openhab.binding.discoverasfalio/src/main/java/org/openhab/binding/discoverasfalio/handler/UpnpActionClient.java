@@ -7,6 +7,8 @@
  */
 package org.openhab.binding.discoverasfalio.handler;
 
+import static org.openhab.binding.discoverasfalio.discoverAsfalioBindingConstants.*;
+
 import org.jupnp.UpnpService;
 import org.jupnp.UpnpServiceImpl;
 import org.jupnp.controlpoint.ActionCallback;
@@ -23,12 +25,19 @@ import org.jupnp.registry.Registry;
 import org.jupnp.registry.RegistryListener;
 
 public class UpnpActionClient implements Runnable {
-    private String monitorState;
+    /*
+     * Declare corresponding channel variables here #harsh
+     */
 
     private RegistryListener listener;
 
-    public UpnpActionClient(String monitorState) {
-        this.monitorState = monitorState;
+    public UpnpActionClient(String channel, String stateValue) {
+        System.out.println(">>>> " + channel + " : " + stateValue);
+        if (channel.equals(CHANNEL_1)) {
+            monitorState = stateValue;
+        } else if (channel.equals(CHANNEL_2)) {
+            recordingState = stateValue;
+        }
     }
 
     @Override
@@ -36,19 +45,30 @@ public class UpnpActionClient implements Runnable {
         try {
             UpnpService upnpService = new UpnpServiceImpl();
             upnpService.startup();
-            /*
-             * ServiceId serviceId = new UDAServiceId("SwitchPower");
-             * Service switchPower;
-             * switchPower = asfalio_device.findService(serviceId);
-             * System.out.println(">>>: switchpower thread of upnpactionclient" + switchPower);
-             */
-
             listener = createRegistryListener(upnpService);
             upnpService.getRegistry().addListener(listener);
 
             // Broadcast a search message for all devices
             STAllHeader sh = new STAllHeader();
             upnpService.getControlPoint().search(sh);
+
+            /*
+             * TODO not search again, compatible with multiple devices and still robust
+             * Though, mqtt will be implemented later
+             */
+            // UpnpService upnpService = new UpnpServiceImpl();
+            // upnpService.startup();
+            /*
+             * ServiceId serviceId = new UDAServiceId("SwitchPower");
+             * Service switchPower;
+             */
+            /*
+             * if ((switchPower = asfalio_device.findService(serviceId)) != null) {
+             *
+             * System.out.println("Service discovered: " + switchPower);
+             * executeAction(upnpService, switchPower);
+             * }
+             */
 
         } catch (Exception ex) {
             System.err.println("Exception occured: " + ex);
@@ -65,12 +85,13 @@ public class UpnpActionClient implements Runnable {
             public void remoteDeviceAdded(Registry registry, RemoteDevice device) {
 
                 System.out.println("device discovered: " + device.getDisplayString());
+
+                // TODO check if the same device by ip address (or thing uid)
                 Service switchPower;
                 if ((switchPower = device.findService(serviceId)) != null) {
 
                     System.out.println("Service discovered: " + switchPower);
                     executeAction(upnpService, switchPower);
-                    upnpService.getRegistry().addListener(listener);
                 }
 
             }
@@ -87,7 +108,7 @@ public class UpnpActionClient implements Runnable {
 
     }
 
-    void executeAction(UpnpService upnpService, Service switchPowerService) {
+    void executeAction(final UpnpService upnpService, Service switchPowerService) {
         System.out.println(">>>>>> In execute action");
         ActionInvocation setTargetInvocation = new SetTargetActionInvocation(switchPowerService);
 
@@ -98,11 +119,13 @@ public class UpnpActionClient implements Runnable {
             public void success(ActionInvocation invocation) {
                 assert invocation.getOutput().length == 0;
                 System.out.println("Successfully called action!");
+                upnpService.shutdown();
             }
 
             @Override
             public void failure(ActionInvocation invocation, UpnpResponse operation, String defaultMsg) {
                 System.err.println(defaultMsg);
+                upnpService.shutdown();
             }
         });
 
@@ -115,11 +138,22 @@ public class UpnpActionClient implements Runnable {
             try {
 
                 // Throws InvalidValueException if the value is of wrong type
-                if (monitorState == "ON") {
-                    setInput("NewTargetValue", true);
+                if (monitorState.equals("ON")) {
+                    setInput("NewMonitorValue", true);
+                    System.out.println(">>> monitorState1");
 
-                } else if (monitorState == "OFF") {
-                    setInput("NewTargetValue", false);
+                } else if (monitorState.equals("OFF")) {
+                    setInput("NewMonitorValue", false);
+                    System.out.println(">>> monitorState2");
+                }
+
+                if (recordingState.equals("ON")) {
+                    setInput("NewRecordingValue", true);
+                    System.out.println(">>> monitorState3");
+
+                } else if (recordingState.equals("OFF")) {
+                    setInput("NewRecordingValue", false);
+                    System.out.println(">>> monitorState4");
                 }
 
             } catch (InvalidValueException ex) {

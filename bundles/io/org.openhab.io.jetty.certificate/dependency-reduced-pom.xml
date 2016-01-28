@@ -55,7 +55,7 @@
       <version>2.0.0.qualifier</version>
       <classifier>lib/bcpkix-jdk15on-1.52.jar</classifier>
       <scope>system</scope>
-      <systemPath>/home/hduser/openhab2-for-eclipse/git/openhab2/bundles/io/org.openhab.io.jetty.certificate/lib/bcpkix-jdk15on-1.52.jar</systemPath>
+      <systemPath>/home/hduser/openhab2/git/openhab2/bundles/io/org.openhab.io.jetty.certificate/lib/bcpkix-jdk15on-1.52.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>org.openhab.bundles.io</groupId>
@@ -63,7 +63,7 @@
       <version>2.0.0.qualifier</version>
       <classifier>lib/bcprov-jdk15on-1.52.jar</classifier>
       <scope>system</scope>
-      <systemPath>/home/hduser/openhab2-for-eclipse/git/openhab2/bundles/io/org.openhab.io.jetty.certificate/lib/bcprov-jdk15on-1.52.jar</systemPath>
+      <systemPath>/home/hduser/openhab2/git/openhab2/bundles/io/org.openhab.io.jetty.certificate/lib/bcprov-jdk15on-1.52.jar</systemPath>
     </dependency>
     <dependency>
       <groupId>p2.eclipse-plugin</groupId>

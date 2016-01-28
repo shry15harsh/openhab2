@@ -18,6 +18,7 @@
   <modules>
     <module>org.openhab.ui.dashboard</module>
     <module>org.openhab.ui.iconset.classic</module>
+    <module>org.openhab.ui.asfalio</module>
   </modules>
 
 </project>

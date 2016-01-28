@@ -14,8 +14,6 @@ import org.eclipse.smarthome.core.thing.ThingTypeUID;
 import org.eclipse.smarthome.core.thing.ThingUID;
 import org.jupnp.model.meta.DeviceDetails;
 import org.jupnp.model.meta.RemoteDevice;
-import org.jupnp.model.meta.Service;
-import org.jupnp.model.types.ServiceId;
 import org.jupnp.model.types.UDAServiceId;
 
 public class asfalioDiscoveryService implements UpnpDiscoveryParticipant {
@@ -27,6 +25,7 @@ public class asfalioDiscoveryService implements UpnpDiscoveryParticipant {
 
     @Override
     public DiscoveryResult createResult(RemoteDevice device) {
+        System.out.println(">>> device info: " + device.getDisplayString());
         ThingUID uid = getThingUID(device);
         // System.out.println(uid.toString());
 
@@ -39,14 +38,16 @@ public class asfalioDiscoveryService implements UpnpDiscoveryParticipant {
                     .withRepresentationProperty(device.getDisplayString()).build();
             System.out.println(">>>>: discovery services:" + device.findServices().toString()
                     + device.findService(new UDAServiceId("SwitchPower")));
-            ServiceId serviceId = new UDAServiceId("SwitchPower");
-            Service switchPower;
-            if ((switchPower = device.findService(serviceId)) != null) {
-
-                System.out.println("Service discovered: " + switchPower);
-                // executeAction(upnpService, switchPower);
-
-            }
+            /*
+             * ServiceId serviceId = new UDAServiceId("SwitchPower");
+             * Service switchPower;
+             * if ((switchPower = device.findService(serviceId)) != null) {
+             *
+             * System.out.println("Service discovered: " + switchPower);
+             * // executeAction(upnpService, switchPower);
+             *
+             * }
+             */
             asfalio_device = device;
 
             return result;
@@ -63,7 +64,7 @@ public class asfalioDiscoveryService implements UpnpDiscoveryParticipant {
         if (details != null && device_type.equals(new String(ASFALIO_DEVICE_TYPE))) {
             String deviceUrl = details.getFriendlyName().toString();
             // TODO: Change UID to something standard
-            return new ThingUID(THING_TYPE_ASFALIO, "5555");
+            return new ThingUID(THING_TYPE_ASFALIO, deviceUrl.replace(".", ""));
         }
         return null;
     }
