@@ -29,9 +29,9 @@ public class nestBindingConstants {
     public final static String CHANNEL_4 = "num_camera";
     public final static String CHANNEL_5 = "thermo1_can_cool";
 
-    public final static Integer NUM_THERMO_CHANNELS = 23;
-    public final static Integer NUM_SMOKE_CHANNELS = 6;
-    public final static Integer NUM_CAMERA_CHANNELS = 15;
+    public final static Integer NUM_THERMO_CHANNELS = 24;
+    public final static Integer NUM_SMOKE_CHANNELS = 7;
+    public final static Integer NUM_CAMERA_CHANNELS = 16;
 
     public static String[] CHANNELS = { "thermo1-can_cool", "thermo1-can_heat", "thermo1-is_using_emergency_heat",
             "thermo1-has_fan", "thermo1-fan_timer_active", "thermo1-fan_timer_timeout", "thermo1-has_leaf",

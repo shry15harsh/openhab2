@@ -55,6 +55,7 @@ public class DataModelRequest extends AbstractRequest {
 
         try {
             json = executeQuery(url);
+            System.out.println(">>>>>>>>>>Data model url" + url);
 
             final DataModelResponse response = JSON.readValue(json, DataModelResponse.class);
 

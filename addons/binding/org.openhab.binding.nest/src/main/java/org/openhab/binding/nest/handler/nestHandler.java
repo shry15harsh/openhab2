@@ -132,6 +132,37 @@ public class nestHandler extends BaseThingHandler {
         ThingBuilder thingBuilder = editThing();
         ChannelTypeUID triggerUID = new ChannelTypeUID(BINDING_ID, "dynamic");
 
+        // Creating channels, items and links for number of devices
+        Channel[] devices_no = new Channel[3];
+        devices_no[0] = ChannelBuilder.create(new ChannelUID(getThing().getUID(), "thermo_no"), "String")
+                .withType(triggerUID).build();
+
+        devices_no[1] = ChannelBuilder.create(new ChannelUID(getThing().getUID(), "smoke_no"), "String")
+                .withType(triggerUID).build();
+
+        devices_no[2] = ChannelBuilder.create(new ChannelUID(getThing().getUID(), "camera_no"), "String")
+                .withType(triggerUID).build();
+
+        thingBuilder.withChannels(devices_no);
+
+        // Add Items
+        for (int i = 0; i < devices_no.length; ++i) {
+            try {
+                addItem(devices_no[i].getUID().getId(), "StringItem", "", "");
+            } catch (Exception e) {
+                logger.error(">>> item " + devices_no[i].getUID().getId() + " could not be added");
+            }
+        }
+
+        // Linking Items and channels
+        for (int i = 0; i < devices_no.length; ++i) {
+            try {
+                addLink(devices_no[i].getUID().getId(), devices_no[i].getUID().toString());
+            } catch (Exception e) {
+                logger.error(">>> link " + devices_no[i].getUID().getId() + " could not be added");
+            }
+        }
+
         /*
          * Set Channels
          */
@@ -162,6 +193,7 @@ public class nestHandler extends BaseThingHandler {
         thermo_channels[20].setChannel("ambient_temperature_c", "Number");
         thermo_channels[21].setChannel("humidity", "Number");
         thermo_channels[22].setChannel("hvac_state", "Number");
+        thermo_channels[23].setChannel("device_id", "String");
 
         smoke_channels = new channel_with_type[NUM_SMOKE_CHANNELS];
         for (int i = 0; i < smoke_channels.length; ++i) {
@@ -174,6 +206,7 @@ public class nestHandler extends BaseThingHandler {
         smoke_channels[3].setChannel("is_manual_test_active", "String");
         smoke_channels[4].setChannel("last_manual_test_time", "String");
         smoke_channels[5].setChannel("ui_color_state", "String");
+        smoke_channels[6].setChannel("device_id", "String");
 
         camera_channels = new channel_with_type[NUM_CAMERA_CHANNELS];
         for (int i = 0; i < camera_channels.length; ++i) {
@@ -195,6 +228,7 @@ public class nestHandler extends BaseThingHandler {
         camera_channels[12].setChannel("last_eventapp_url", "String");
         camera_channels[13].setChannel("last_eventimage_url", "String");
         camera_channels[14].setChannel("last_eventanimated_image_url", "String");
+        camera_channels[15].setChannel("device_id", "String");
 
         /*
          * Number of different devices to create channels for each of them
@@ -202,6 +236,16 @@ public class nestHandler extends BaseThingHandler {
         num_thermostat = response.getDevices().getThermostats().size();
         num_smoke = response.getDevices().getSmoke_co_alarms().size();
         num_camera = response.getDevices().getCameras().size();
+
+        // Update no of devices channels
+        State value = new StringType(String.valueOf(num_thermostat));
+        updateState(devices_no[0].getUID(), value);
+
+        value = new StringType(String.valueOf(num_smoke));
+        updateState(devices_no[1].getUID(), value);
+
+        value = new StringType(String.valueOf(num_camera));
+        updateState(devices_no[2].getUID(), value);
 
         channels = new Channel[NUM_THERMO_CHANNELS * num_thermostat + NUM_SMOKE_CHANNELS * num_smoke
                 + NUM_CAMERA_CHANNELS * num_camera];
@@ -296,6 +340,9 @@ public class nestHandler extends BaseThingHandler {
 
             State value;
 
+            System.out.println(">>>> value of thermo name" + thermostat.getValue().getName());
+            System.out.println(">>>> value of thermo long name" + thermostat.getValue().getName_long());
+
             /*
              * Order must be same as channels array, another way is to use multiplier with channel number
              */
@@ -370,6 +417,8 @@ public class nestHandler extends BaseThingHandler {
             value = new StringType(thermostat.getValue().getHvac_state().toString());
             updateState(channels[num++].getUID(), value);
 
+            value = new StringType(thermostat.getValue().getDevice_id().toString());
+            updateState(channels[num++].getUID(), value);
         }
 
         j = 0;
@@ -395,6 +444,9 @@ public class nestHandler extends BaseThingHandler {
             updateState(channels[num++].getUID(), value);
 
             value = new StringType(smoke.getValue().getUi_color_state().toString());
+            updateState(channels[num++].getUID(), value);
+
+            value = new StringType(smoke.getValue().getDevice_id().toString());
             updateState(channels[num++].getUID(), value);
 
         }
@@ -449,6 +501,9 @@ public class nestHandler extends BaseThingHandler {
             updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getLast_event().getAnimated_image_url().toString());
+            updateState(channels[num++].getUID(), value);
+
+            value = new StringType(camera.getValue().getDevice_id().toString());
             updateState(channels[num++].getUID(), value);
 
         }
