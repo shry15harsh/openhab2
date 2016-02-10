@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<thing:thing-descriptions bindingId="asfaliosettings"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:thing="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0"
+        xsi:schemaLocation="http://eclipse.org/smarthome/schemas/thing-description/v1.0.0 http://eclipse.org/smarthome/schemas/thing-description-1.0.0.xsd">
+
+    <!-- Sample Thing Type -->
+    <thing-type id="mainsettings">
+        <label>asfalioSettings Binding Thing</label>
+        <description>Sample thing for asfalioSettings Binding</description>
+
+        <channels>
+            <channel id="channel1" typeId="sample-channel"/>
+        </channels>
+        
+        <config-description>
+        <parameter name="location" type="text" required="true">
+            <label>Location</label>
+            <description>Location for the weather information.
+                Syntax is WOEID, see https://en.wikipedia.org/wiki/WOEID.
+            </description>
+        </parameter>
+        <parameter name="internetsharing" type="boolean">
+            <label>Internet Sharing</label>
+            <description>Do you want to share your Internet with your neighbours?</description>
+            <default>false</default>
+        </parameter>
+        <parameter name="remoteaccess" type="boolean">
+            <label>Remote Access</label>
+            <description>Enabled only on HTTPS.</description>
+            <default>false</default>
+        </parameter>
+        <parameter name="language" type="text">
+            <label>Language</label>
+            <description>Language in the App.</description>
+            <default>en</default>
+        </parameter>
+        <parameter name="locationsharing" type="text">
+            <label>Default Location Sharing Mode</label>
+            <description>Neighbourhood or something.</description>
+            <default>Neighbourbood</default>
+        </parameter>
+    </config-description>
+    </thing-type>
+
+    <!-- Sample Channel Type -->
+    <channel-type id="sample-channel">
+        <item-type>asfaliosettingsItem</item-type>
+        <label>asfalioSettings Binding Channel</label>
+        <description>Sample channel for asfalioSettings Binding</description>
+    </channel-type>
+
+</thing:thing-descriptions>

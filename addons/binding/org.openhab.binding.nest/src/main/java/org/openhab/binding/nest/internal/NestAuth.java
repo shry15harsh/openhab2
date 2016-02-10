@@ -1,17 +1,25 @@
 package org.openhab.binding.nest.internal;
 
+import java.math.BigDecimal;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.prefs.Preferences;
 
 import org.eclipse.smarthome.config.core.Configuration;
+import org.eclipse.smarthome.core.types.Command;
 //import org.openhab.binding.nest.NestBindingProvider;
 import org.openhab.binding.nest.internal.messages.AccessTokenRequest;
 import org.openhab.binding.nest.internal.messages.AccessTokenResponse;
+import org.openhab.binding.nest.internal.messages.Camera;
 import org.openhab.binding.nest.internal.messages.DataModel;
+import org.openhab.binding.nest.internal.messages.DataModel.Devices;
 import org.openhab.binding.nest.internal.messages.DataModelRequest;
 import org.openhab.binding.nest.internal.messages.DataModelResponse;
+import org.openhab.binding.nest.internal.messages.SmokeCOAlarm;
+import org.openhab.binding.nest.internal.messages.Structure;
+import org.openhab.binding.nest.internal.messages.Thermostat;
+import org.openhab.binding.nest.internal.messages.UpdateDataModelRequest;
 import org.openhab.core.types.State;
 import org.osgi.service.cm.ConfigurationException;
 import org.osgi.service.cm.ManagedService;
@@ -72,15 +80,20 @@ public class NestAuth implements ManagedService {
             } else {
                 // TODO exceptional cases when pin is null but access token is not
                 System.out.println(">>>access token hai bhai, purana to nahi h?");
-                if (prefs.get("pin_code", null) == null) {
+                if (prefs.get("pin_code", null) == "") {
                     System.out.println(">>> pin_code is null in prefs");
                 } else {
                     System.out.println(">>> pin_code " + prefs.get("pin_code", null).toString() + ", "
                             + cfg.getProperties().get("pin_code").toString());
                 }
-                if (prefs.get("pin_code", null).toString().equals(cfg.getProperties().get("pin_code").toString())) {
-                    System.out.println(">>> nahi, naya hi hai " + saved_access_token);
+                if (prefs.get("pin_code", null).toString().equals(cfg.getProperties().get("pin_code").toString())
+                        && prefs.get("pin_code", null) != "") {
+                    System.out.println(">>> nahi, naya hi hai " + saved_access_token + ">>>"
+                            + prefs.get("pin_code", null) + "<<<");
                     credentials.accessToken = saved_access_token;
+                } else if (prefs.get("pin_code", null) == "" && prefs.get("pin_code", null).toString()
+                        .equals(cfg.getProperties().get("pin_code").toString())) {
+                    prefs.put("pin_code", "");
                 } else {
                     System.out.println(">>> Pin code changed, requesting new access token");
                     prefs.put("pin_code", cfg.getProperties().get("pin_code").toString());
@@ -387,5 +400,213 @@ public class NestAuth implements ManagedService {
     public void updated(Dictionary<String, ?> properties) throws ConfigurationException {
         // TODO Auto-generated method stub
         System.out.println(">>>:  aa gya managed service k updated me");
+    }
+
+    /* update nest */
+    public void updateNest(final String channelName, final Command newCommand, DataModelResponse response) {
+        String property = getProperty(channelName); // can_cool
+        String device = getDevice(channelName); // thermo1
+        int channel_num = getChannelNum(device) - 1; // 1
+
+        String state_values[] = newCommand.toString().split("<=>");
+        String value_device_id = state_values[1];
+        String new_value = state_values[0];
+
+        System.out.println(">>>> Value received is " + newCommand.toString() + " value= " + new_value + " device id = "
+                + value_device_id);
+
+        String device_id, device_name;
+
+        // logger.info(">>> " + property + " " + device + " " + device_id + " " + channelName + " " + channel_num);
+
+        DataModel updateDataModel = null;
+
+        // Create Data Model for the corresponding update
+
+        if (device.contains("thermo")) {
+            Map.Entry<String, Thermostat>[] thermostats = response.getDevices().getThermostats().entrySet().toArray(
+                    (Map.Entry<String, Thermostat>[]) new Map.Entry[response.getDevices().getThermostats().size()]);
+            device_id = thermostats[channel_num].getValue().getDevice_id();
+            device_name = thermostats[channel_num].getValue().getName();
+
+            System.out.println(">>> device id: " + device_id + " device name = " + device_name);
+
+            updateDataModel = new DataModel();
+            updateDataModel.devices = new Devices();
+            Thermostat thermostat = new Thermostat(null);
+            updateDataModel.devices.thermostats_by_id = new HashMap<String, Thermostat>();
+            updateDataModel.devices.thermostats_by_id.put(value_device_id, thermostat);
+            // updateDataModel.devices.thermostats_by_name = new HashMap<String, Thermostat>();
+            // updateDataModel.devices.thermostats_by_name.put(device_name, thermostat);
+
+            if (property.equals("fan_timer_active")) {
+                if (new_value.equals("true")) {
+                    thermostat.setFan_timer_active(true);
+                } else if (new_value.equals("false")) {
+                    thermostat.setFan_timer_active(false);
+                }
+            } else if (property.equals("target_temperature_f")) {
+                thermostat.setTarget_temperature_f(new BigDecimal(new_value));
+            } else if (property.equals("target_temperature_c")) {
+                thermostat.setTarget_temperature_c(new BigDecimal(new_value));
+            } else if (property.equals("target_temperature_high_f")) {
+                thermostat.setTarget_temperature_high_f(new BigDecimal(new_value));
+            } else if (property.equals("target_temperature_high_c")) {
+                thermostat.setTarget_temperature_high_c(new BigDecimal(new_value));
+            } else if (property.equals("target_temperature_low_f")) {
+                thermostat.setTarget_temperature_low_f(new BigDecimal(new_value));
+            } else if (property.equals("target_temperature_low_c")) {
+                thermostat.setTarget_temperature_low_c(new BigDecimal(new_value));
+            } else if (property.equals("hvac_mode")) {
+                if (new_value.equals("heat")) {
+                    thermostat.setHvac_mode(Thermostat.HvacMode.HEAT);
+                } else if (new_value.equals("cool")) {
+                    thermostat.setHvac_mode(Thermostat.HvacMode.COOL);
+                } else if (new_value.equals("heat-cool")) {
+                    thermostat.setHvac_mode(Thermostat.HvacMode.HEAT_COOL);
+                } else if (new_value.equals("off")) {
+                    thermostat.setHvac_mode(Thermostat.HvacMode.OFF);
+                }
+            }
+
+        } else if (device.contains("smoke")) {
+            Map.Entry<String, SmokeCOAlarm>[] entries = new Map.Entry[response.getDevices().getSmoke_co_alarms()
+                    .size()];
+            Map.Entry<String, SmokeCOAlarm>[] smokes = response.getDevices().getSmoke_co_alarms().entrySet()
+                    .toArray(entries);
+            device_id = smokes[channel_num].getValue().getDevice_id();
+            device_name = smokes[channel_num].getValue().getName();
+
+            System.out.println(">>> device id: " + device_id + " device name = " + device_name);
+
+            updateDataModel = new DataModel();
+            updateDataModel.devices = new Devices();
+            SmokeCOAlarm smokeCOAlarm = new SmokeCOAlarm(null);
+            updateDataModel.devices.smoke_co_alarms_by_id = new HashMap<String, SmokeCOAlarm>();
+            updateDataModel.devices.smoke_co_alarms_by_id.put(value_device_id, smokeCOAlarm);
+            // updateDataModel.devices.smoke_co_alarms_by_name = new HashMap<String, SmokeCOAlarm>();
+            // updateDataModel.devices.smoke_co_alarms_by_name.put(device_name, smokeCOAlarm);
+
+        } else if (device.contains("camera")) {
+            Map.Entry<String, Camera>[] entries = new Map.Entry[response.getDevices().getCameras().size()];
+            Map.Entry<String, Camera>[] cameras = response.getDevices().getCameras().entrySet().toArray(entries);
+
+            device_id = cameras[channel_num].getValue().getDevice_id();
+            device_name = cameras[channel_num].getValue().getName();
+
+            System.out.println(">>>" + device_id + " " + device_name);
+
+            System.out.println(">>> device id: " + device_id + " device name = " + device_name);
+
+            updateDataModel = new DataModel();
+            updateDataModel.devices = new Devices();
+            Camera camera = new Camera(null);
+            updateDataModel.devices.cameras_by_id = new HashMap<String, Camera>();
+            updateDataModel.devices.cameras_by_id.put(value_device_id, camera);
+            // updateDataModel.devices.cameras_by_name = new HashMap<String, Camera>();
+            // updateDataModel.devices.cameras_by_name.put(device_name, camera);
+
+            if (property.equals("is_streaming")) {
+                if (new_value.equals("true")) {
+                    camera.setIs_streaming(true);
+                } else if (new_value.equals("false")) {
+                    camera.setIs_streaming(false);
+                }
+            }
+        } else if (device.contains("structure")) {
+            Map.Entry<String, Structure>[] structures = response.getStructures().entrySet()
+                    .toArray((Map.Entry<String, Structure>[]) new Map.Entry[response.getStructures().size()]);
+            String structureId = structures[0].getValue().getStructure_id();
+            String structureName = structures[0].getValue().getName();
+
+            updateDataModel = new DataModel();
+            Structure structure = new Structure(null);
+            updateDataModel.structures_by_id = new HashMap<String, Structure>();
+            updateDataModel.structures_by_id.put(structureId, structure);
+            updateDataModel.structures_by_name = new HashMap<String, Structure>();
+            updateDataModel.structures_by_name.put(structureName, structure);
+
+            if (property.equals("home_away")) {
+                if (new_value.equals("auto-away")) {
+                    structure.setAway(Structure.AwayState.AUTO_AWAY);
+                } else if (new_value.equals("away")) {
+                    structure.setAway(Structure.AwayState.AWAY);
+                } else if (new_value.equals("home")) {
+                    structure.setAway(Structure.AwayState.HOME);
+                }
+            }
+        }
+
+        System.out.println(">>>>> data model to be updated" + updateDataModel.toString());
+        String userid = DEFAULT_USER_ID;
+        OAuthCredentials credentials = new OAuthCredentials(userid);
+
+        Preferences prefs = credentials.getPrefsNode();
+        String access_token = prefs.get("access_token", null);
+
+        // If we don't have an access token yet, retrieve one.
+        if (access_token == null) {
+            logger.warn("Sending update skipped.");
+            return;
+        }
+
+        UpdateDataModelRequest request = new UpdateDataModelRequest(access_token, updateDataModel);
+
+        try {
+            DataModelResponse update_response = request.execute();
+            if (update_response.isError()) {
+                logger.error("Error updating data model: {}", update_response);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+
+    }
+
+    // returns channel Name to be mapped with JSON
+    private String getProperty(String channelName) {
+        if (channelName.contains("thermo")) {
+            logger.info(">>> The Thermostat channel it is");
+            return channelName.substring(8);
+        } else if (channelName.contains("smoke")) {
+            logger.info(">>> The smoke channel it is");
+            return channelName.substring(7);
+        } else if (channelName.contains("camera")) {
+            logger.info(">>> The camera channel it is");
+            return channelName.substring(8);
+        } else {
+            logger.info(">>> The general channel it is");
+            return channelName;
+        }
+    }
+
+    // returns prefix with device number
+    private String getDevice(String channelName) {
+        if (channelName.contains("thermo")) {
+            logger.info(">>> The Thermostat it is");
+            return channelName.substring(0, 7);
+        } else if (channelName.contains("smoke")) {
+            logger.info(">>> The smoke it is");
+            return channelName.substring(0, 6);
+        } else if (channelName.contains("camera")) {
+            logger.info(">>> The camera it is");
+            return channelName.substring(0, 7);
+        } else {
+            logger.info("general");
+            return "structure";
+        }
+    }
+
+    // returns device number
+    private int getChannelNum(String device) {
+        if (device.contains("thermo")) {
+            return Integer.parseInt(device.substring(6, 7));
+        } else if (device.contains("smoke")) {
+            return Integer.parseInt(device.substring(5, 6));
+        } else if (device.contains("camera")) {
+            return Integer.parseInt(device.substring(6, 7));
+        } else {
+            return -1;
+        }
     }
 }

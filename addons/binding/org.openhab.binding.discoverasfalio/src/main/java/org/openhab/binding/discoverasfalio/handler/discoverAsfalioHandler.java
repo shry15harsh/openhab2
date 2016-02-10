@@ -12,11 +12,13 @@ import static org.openhab.binding.discoverasfalio.discoverAsfalioBindingConstant
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.smarthome.core.library.types.OnOffType;
 import org.eclipse.smarthome.core.thing.ChannelUID;
 import org.eclipse.smarthome.core.thing.Thing;
 import org.eclipse.smarthome.core.thing.ThingStatus;
 import org.eclipse.smarthome.core.thing.binding.BaseThingHandler;
 import org.eclipse.smarthome.core.types.Command;
+import org.eclipse.smarthome.core.types.State;
 import org.jupnp.UpnpService;
 import org.jupnp.UpnpServiceImpl;
 import org.jupnp.controlpoint.ActionCallback;
@@ -157,6 +159,21 @@ public class discoverAsfalioHandler extends BaseThingHandler {
                             System.out.println("Recording State is: " + values.get("RecordingState").toString());
 
                             System.out.println("Monitor State is: " + values.get("MonitorState").toString());
+
+                            State value;
+                            if (values.get("MonitorState").toString() == "0") {
+                                value = OnOffType.OFF;
+                            } else {
+                                value = OnOffType.ON;
+                            }
+                            updateState(getThing().getChannel("monitorState").getUID(), value);
+
+                            if (values.get("RecordingState").toString() == "0") {
+                                value = OnOffType.OFF;
+                            } else {
+                                value = OnOffType.ON;
+                            }
+                            updateState(getThing().getChannel("recordingState").getUID(), value);
 
                         }
 

@@ -36,6 +36,7 @@ import org.openhab.binding.nest.internal.NestAuth;
 import org.openhab.binding.nest.internal.messages.Camera;
 import org.openhab.binding.nest.internal.messages.DataModelResponse;
 import org.openhab.binding.nest.internal.messages.SmokeCOAlarm;
+import org.openhab.binding.nest.internal.messages.Structure;
 import org.openhab.binding.nest.internal.messages.Thermostat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,10 +54,13 @@ public class nestHandler extends BaseThingHandler {
 
     private Logger logger = LoggerFactory.getLogger(nestHandler.class);
 
+    private NestAuth na;
+
     private Channel[] channels;
     private channel_with_type[] thermo_channels;
     private channel_with_type[] smoke_channels;
     private channel_with_type[] camera_channels;
+    private Channel home_away;
 
     private int num_thermostat;
     private int num_smoke;
@@ -64,22 +68,15 @@ public class nestHandler extends BaseThingHandler {
 
     private boolean channels_created = false;
 
+    private DataModelResponse response;
+
     public nestHandler(Thing thing) {
         super(thing);
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
-        logger.error(channelUID.getId() + " channel name is >>>>>>>>>>>>>>>>>>>>>> " + CHANNEL_1);
-        if (channelUID.getId().equals(CHANNEL_1)) {
-            System.out.println(">>>: ha ha ha,aa hi gya wapis");
-            // TODO: handle command
-
-            // Note: if communication with thing fails for some reason,
-            // indicate that by setting the status with detail information
-            // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR,
-            // "Could not control device at IP address x.x.x.x");
-        }
+        na.updateNest(channelUID.getId(), command, response);
     }
 
     @Override
@@ -104,19 +101,23 @@ public class nestHandler extends BaseThingHandler {
             @Override
             public void run() {
                 try {
-                    NestAuth na = new NestAuth();
-                    DataModelResponse response = na.execute(cfg);
+                    na = new NestAuth();
+                    response = na.execute(cfg);
                     /* Create the dynamic channels */
                     if (channels_created == false) {
                         logger.info(">>> channels are creating");
                         try {
-                            createAllChannels(response);
+                            logger.info(">>> channels_created is false, making it true");
+                            channels_created = true;
+                            createAllChannels();
                         } catch (Exception e) {
                             logger.error(">>>> exception aaya create channels me");
-                            channels_created = true;
+                            // channels_created = true;
                         }
+                    } else {
+                        logger.info(">>> channels_created is true");
                     }
-                    updateChannels(response);
+                    updateChannels();
 
                 } catch (Exception e) {
                     // TODO throw error when web service down (or critical error) and set thing status
@@ -128,22 +129,32 @@ public class nestHandler extends BaseThingHandler {
         refreshJob = scheduler.scheduleAtFixedRate(runnable, 0, refresh, TimeUnit.SECONDS);
     }
 
-    private void createAllChannels(DataModelResponse response) {
+    private void createAllChannels() {
         ThingBuilder thingBuilder = editThing();
         ChannelTypeUID triggerUID = new ChannelTypeUID(BINDING_ID, "dynamic");
 
-        // Creating channels, items and links for number of devices
-        Channel[] devices_no = new Channel[3];
+        // Creating channels, items and links for number of devices and home_away
+        Channel[] devices_no = new Channel[4];
         devices_no[0] = ChannelBuilder.create(new ChannelUID(getThing().getUID(), "thermo_no"), "String")
                 .withType(triggerUID).build();
+        // thingBuilder.withChannel(devices_no[0]);
 
         devices_no[1] = ChannelBuilder.create(new ChannelUID(getThing().getUID(), "smoke_no"), "String")
                 .withType(triggerUID).build();
 
+        // thingBuilder.withChannel(devices_no[1]);
+
         devices_no[2] = ChannelBuilder.create(new ChannelUID(getThing().getUID(), "camera_no"), "String")
                 .withType(triggerUID).build();
+        // thingBuilder.withChannel(devices_no[2]);
 
-        thingBuilder.withChannels(devices_no);
+        devices_no[3] = ChannelBuilder.create(new ChannelUID(getThing().getUID(), "home_away"), "String")
+                .withType(triggerUID).build();
+                // thingBuilder.withChannel(devices_no[3]);
+
+        // thingBuilder.withChannels(devices_no);
+
+        home_away = devices_no[3];
 
         // Add Items
         for (int i = 0; i < devices_no.length; ++i) {
@@ -194,6 +205,7 @@ public class nestHandler extends BaseThingHandler {
         thermo_channels[21].setChannel("humidity", "Number");
         thermo_channels[22].setChannel("hvac_state", "Number");
         thermo_channels[23].setChannel("device_id", "String");
+        thermo_channels[24].setChannel("name", "String");
 
         smoke_channels = new channel_with_type[NUM_SMOKE_CHANNELS];
         for (int i = 0; i < smoke_channels.length; ++i) {
@@ -207,6 +219,7 @@ public class nestHandler extends BaseThingHandler {
         smoke_channels[4].setChannel("last_manual_test_time", "String");
         smoke_channels[5].setChannel("ui_color_state", "String");
         smoke_channels[6].setChannel("device_id", "String");
+        smoke_channels[7].setChannel("name", "String");
 
         camera_channels = new channel_with_type[NUM_CAMERA_CHANNELS];
         for (int i = 0; i < camera_channels.length; ++i) {
@@ -229,13 +242,18 @@ public class nestHandler extends BaseThingHandler {
         camera_channels[13].setChannel("last_eventimage_url", "String");
         camera_channels[14].setChannel("last_eventanimated_image_url", "String");
         camera_channels[15].setChannel("device_id", "String");
+        camera_channels[16].setChannel("name", "String");
 
         /*
          * Number of different devices to create channels for each of them
          */
-        num_thermostat = response.getDevices().getThermostats().size();
-        num_smoke = response.getDevices().getSmoke_co_alarms().size();
-        num_camera = response.getDevices().getCameras().size();
+        try {
+            num_thermostat = response.getDevices().getThermostats().size();
+            num_smoke = response.getDevices().getSmoke_co_alarms().size();
+            num_camera = response.getDevices().getCameras().size();
+        } catch (Exception e) {
+            logger.error("Response is null", e);
+        }
 
         // Update no of devices channels
         State value = new StringType(String.valueOf(num_thermostat));
@@ -247,9 +265,9 @@ public class nestHandler extends BaseThingHandler {
         value = new StringType(String.valueOf(num_camera));
         updateState(devices_no[2].getUID(), value);
 
-        channels = new Channel[NUM_THERMO_CHANNELS * num_thermostat + NUM_SMOKE_CHANNELS * num_smoke
+        channels = new Channel[devices_no.length + NUM_THERMO_CHANNELS * num_thermostat + NUM_SMOKE_CHANNELS * num_smoke
                 + NUM_CAMERA_CHANNELS * num_camera];
-        thingBuilder.withChannels(channels);
+        // thingBuilder.withChannels(channels);
         /*
          * First loop is for number of each device and inner loop is for creating channels for them
          */
@@ -257,6 +275,12 @@ public class nestHandler extends BaseThingHandler {
         // different
         int i; // For loop
         int channel_index = 0; // for channels array
+
+        for (i = 0; i < devices_no.length; ++i) {
+            channels[channel_index] = devices_no[i];
+            channel_index++;
+        }
+
         for (Integer j = 1; j <= num_thermostat; ++j) {
             channel_prefix = "thermo" + j.toString() + "_";
             for (i = 0; i < thermo_channels.length; ++i) {
@@ -307,8 +331,7 @@ public class nestHandler extends BaseThingHandler {
                 }
             }
         }
-        // thingBuilder.withChannels(channels);
-        channels_created = true;
+
         for (i = 0; i < channels.length; ++i) {
             System.out.println(">>> channel is " + i + " " + channels[i].getUID().toString());
         }
@@ -321,17 +344,25 @@ public class nestHandler extends BaseThingHandler {
             }
         }
 
+        updateThing(thingBuilder.build());
         updateStatus(ThingStatus.ONLINE);
 
     }
 
-    private void updateChannels(DataModelResponse response) {
+    private void updateChannels() {
         logger.info(">>> update channels");
         String channel_prefix;
         Integer j = 0;
-        Integer num = 0;
+        Integer num = 4;
         // TODO Check if num_thermostat < number of devices (using value of j), if true, create channels again
         // (channels_created=false)
+
+        // Structures might get more than one but this only considers 1
+        for (Map.Entry<String, Structure> structure : response.getStructures().entrySet()) {
+            State value = new StringType(structure.getValue().getAway().toString());
+            updateState(home_away.getUID(), value);
+        }
+
         for (Map.Entry<String, Thermostat> thermostat : response.getDevices().getThermostats().entrySet()) {
             System.out.println(">>>> thermo no #" + j);
             Integer mul = j * NUM_THERMO_CHANNELS;
@@ -372,7 +403,7 @@ public class nestHandler extends BaseThingHandler {
             updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getTarget_temperature_f().toString());
-            System.out.println(">>>> thermo #" + j + " and channel = " + channels[8 + mul].getUID().toString());
+            // System.out.println(">>>> thermo #" + j + " and channel = " + channels[8 + mul].getUID().toString());
             updateState(channels[num++].getUID(), value);
 
             value = new StringType(thermostat.getValue().getTarget_temperature_c().toString());
@@ -419,6 +450,9 @@ public class nestHandler extends BaseThingHandler {
 
             value = new StringType(thermostat.getValue().getDevice_id().toString());
             updateState(channels[num++].getUID(), value);
+
+            value = new StringType(thermostat.getValue().getName().toString());
+            updateState(channels[num++].getUID(), value);
         }
 
         j = 0;
@@ -447,6 +481,9 @@ public class nestHandler extends BaseThingHandler {
             updateState(channels[num++].getUID(), value);
 
             value = new StringType(smoke.getValue().getDevice_id().toString());
+            updateState(channels[num++].getUID(), value);
+
+            value = new StringType(smoke.getValue().getName().toString());
             updateState(channels[num++].getUID(), value);
 
         }
@@ -504,6 +541,9 @@ public class nestHandler extends BaseThingHandler {
             updateState(channels[num++].getUID(), value);
 
             value = new StringType(camera.getValue().getDevice_id().toString());
+            updateState(channels[num++].getUID(), value);
+
+            value = new StringType(camera.getValue().getName().toString());
             updateState(channels[num++].getUID(), value);
 
         }
